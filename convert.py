@@ -1,4 +1,5 @@
 import os
+import sys
 from pdf2image import convert_from_path
 from pptx import Presentation
 from pptx.util import Inches
@@ -34,7 +35,20 @@ def pdf_to_ppt(pdf_path, ppt_path, dpi=300):
     presentation.save(ppt_path)
     print(f"PowerPoint saved at {ppt_path}")
 
-# Example usage
-pdf_path = "AI_02_Fundamentals_of_AI.pdf"
-ppt_path = "output_presentation.pptx"
-pdf_to_ppt(pdf_path, ppt_path)
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Usage: python convert.py input.pdf output.pptx")
+        sys.exit(1)
+        
+    input_pdf = sys.argv[1]
+    output_ppt = sys.argv[2]
+    
+    if not input_pdf.lower().endswith('.pdf'):
+        print("Error: Input file must be a PDF")
+        sys.exit(1)
+        
+    if not output_ppt.lower().endswith('.pptx'):
+        print("Error: Output file must be a PPTX")
+        sys.exit(1)
+        
+    pdf_to_ppt(input_pdf, output_ppt)
