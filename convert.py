@@ -18,18 +18,49 @@ def pdf_to_ppt(pdf_path, ppt_path, dpi=300):
 
     # Convert PDF pages to images
     images = convert_from_path(pdf_path, dpi=dpi)
-
+    total_pages = len(images)
+    
+    print(f"Converting {total_pages} pages...")
+    
     for idx, img in enumerate(images):
-        # Save each image temporarily
-        img_path = f"temp_page_{idx + 1}.png"
-        img.save(img_path, "PNG")
-
-        # Add a slide for each image
-        slide = presentation.slides.add_slide(presentation.slide_layouts[6])  # Blank slide layout
-        slide.shapes.add_picture(img_path, Inches(0), Inches(0), width=Inches(10), height=Inches(7.5))
-
-        # Remove the temporary image
-        os.remove(img_path)
+        # Show progress on same line
+        progress = (idx + 1) / total_pages * 100
+        print(f"Processing page {idx + 1}/{total_pages} ({progress:.1f}%)    ", end="\r")
+        # Get image dimensions
+        width, height = img.size
+        
+        if height > width:  # Vertical orientation
+            # Split image into upper and lower halves
+            upper_half = img.crop((0, 0, width, height//2))
+            lower_half = img.crop((0, height//2, width, height))
+            
+            # Calculate aspect ratio for halves
+            aspect_ratio = width / (height / 2)
+            half_height = Inches(10) / aspect_ratio
+            
+            # Calculate vertical offset to center the image
+            vertical_offset = (Inches(7.5) - half_height) / 2
+            
+            # Save and add upper half
+            upper_path = f"temp_page_{idx + 1}_upper.png"
+            upper_half.save(upper_path, "PNG")
+            slide = presentation.slides.add_slide(presentation.slide_layouts[6])
+            slide.shapes.add_picture(upper_path, Inches(0), vertical_offset, width=Inches(10))
+            os.remove(upper_path)
+            
+            # Save and add lower half
+            lower_path = f"temp_page_{idx + 1}_lower.png"
+            lower_half.save(lower_path, "PNG")
+            slide = presentation.slides.add_slide(presentation.slide_layouts[6])
+            slide.shapes.add_picture(lower_path, Inches(0), vertical_offset, width=Inches(10))
+            os.remove(lower_path)
+        else:  # Horizontal or square orientation
+            # Save and add full image
+            full_path = f"temp_page_{idx + 1}.png"
+            img.save(full_path, "PNG")
+            slide = presentation.slides.add_slide(presentation.slide_layouts[6])
+            slide.shapes.add_picture(full_path, Inches(0), Inches(0), width=Inches(10))
+            os.remove(full_path)
 
     # Save the presentation
     presentation.save(ppt_path)
